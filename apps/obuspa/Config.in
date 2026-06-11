@@ -3,6 +3,9 @@ menu "Select obuspa build options"
 
 config OBUSPA_WEBSOCKET_MTP_SUPPORT
     bool "Whether WebSocket MTP support is enabled in the obuspa"
-    default n
+    # prpl-feed deviation from upstream (which defaults n): this feed exists for
+    # WebSocket onboarding to a USP Controller, so WS MTP is enabled by default.
+    # Pulls in libwebsockets4-full. Set to n to drop WS (e.g. STOMP/UDS-only builds).
+    default y
 
 endmenu

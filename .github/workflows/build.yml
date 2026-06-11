@@ -1,0 +1,106 @@
+name: Build packages
+
+# Builds the prpl USP feed as OpenWrt .ipk packages for mt7621 and rk3308,
+# using the official OpenWrt SDK via openwrt/gh-action-sdk.
+#
+#   board    OpenWrt target     package arch
+#   mt7621   ramips/mt7621      mipsel_24kc
+#   rk3308   rockchip/armv8     aarch64_generic
+
+on:
+  push:
+    branches: [main, master]
+    tags: ['v*']
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'OpenWrt release (SDK version), e.g. 24.10.7 or SNAPSHOT'
+        required: false
+        default: '24.10.7'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # default OpenWrt version when not triggered via workflow_dispatch
+  DEFAULT_VERSION: '24.10.7'
+  FEEDNAME: prpl_usp
+
+jobs:
+  build:
+    name: ${{ matrix.board }} (${{ matrix.arch }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - board: mt7621
+            arch: mipsel_24kc
+          - board: rk3308
+            arch: aarch64_generic
+    steps:
+      - name: Checkout feed
+        uses: actions/checkout@v4
+
+      - name: Resolve OpenWrt version
+        id: ver
+        run: echo "version=${{ github.event.inputs.version || env.DEFAULT_VERSION }}" >> "$GITHUB_OUTPUT"
+
+      - name: Build with OpenWrt SDK
+        uses: openwrt/gh-action-sdk@main
+        env:
+          # <package-arch>-<openwrt-version>; selects the openwrt/sdk container
+          ARCH: ${{ matrix.arch }}-${{ steps.ver.outputs.version }}
+          FEEDNAME: ${{ env.FEEDNAME }}
+          # PACKAGES empty => build the WHOLE feed (validates all packages)
+          V: s
+          INDEX: '1'
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p out
+          # gh-action-sdk drops ipks under bin/packages/<arch>/<feedname>/
+          find bin -name '*.ipk' -exec cp -v {} out/ \;
+          ls -l out
+
+      - name: Upload .ipk artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ipk-${{ matrix.board }}-${{ matrix.arch }}
+          path: out/*.ipk
+          if-no-files-found: error
+
+  release:
+    name: Publish Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Stage release files (prefix by board)
+        run: |
+          mkdir -p release
+          # dist/ipk-<board>-<arch>/<pkg>.ipk -> release/<board>-<arch>-<pkg>.ipk
+          for d in dist/ipk-*; do
+            tag="$(basename "$d" | sed 's/^ipk-//')"
+            for f in "$d"/*.ipk; do
+              [ -e "$f" ] || continue
+              cp -v "$f" "release/${tag}-$(basename "$f")"
+            done
+          done
+          ls -l release
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*.ipk
+          generate_release_notes: true

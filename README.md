@@ -107,6 +107,34 @@ them. The right-hand column maps back to the component names used in the origina
 > which buildroot provides. There are **no unsatisfiable prpl-specific build dependencies**. Verify with:
 > `grep -rhoE 'DEPENDS.*\+[A-Za-z0-9_.:-]+' */*/Makefile` vs `find . -name Makefile`.
 
+## Build methods
+
+The feed produces OpenWrt **.ipk packages** for two boards (other arches work too — just change the
+target/arch):
+
+| board | OpenWrt target | package arch | OpenWrt SDK image |
+|---|---|---|---|
+| **mt7621** | `ramips/mt7621` | `mipsel_24kc` | `openwrt/sdk:ramips-mt7621-24.10.7` |
+| **rk3308** | `rockchip/armv8` | `aarch64_generic` | `openwrt/sdk:rockchip-armv8-24.10.7` |
+
+Default OpenWrt release is **24.10.7** (override everywhere via a version arg/input). Four ways to build:
+
+1. **GitHub CI** — `.github/workflows/build.yml`. On push/PR it builds the whole feed for both arches via
+   the official `openwrt/gh-action-sdk`, uploads the `.ipk` as artifacts, and on a `v*` tag attaches them
+   to a GitHub Release. Manual run: *Actions → Build packages → Run workflow* (optional `version` input).
+2. **Container** — `./docker-build.sh [mt7621|rk3308] [version]` (no args = both boards). Builds inside
+   the `openwrt/sdk` image and drops `.ipk` into `./artifacts/<arch>/`. Env: `ENABLE_MTLS=1`, `VERSION=`,
+   `DOCKER=podman`.
+3. **Standard OpenWrt feed** — add this feed to an existing buildroot/SDK and use `./scripts/feeds` +
+   `make package/<name>/compile` (detailed below). Works with `src-link` (local) or `src-git` (remote tag).
+4. **Local helper** — `./build.sh <openwrt-source-or-SDK>` automates feed register → install → `.config`
+   seed → compile for any checkout you already have (knobs: `ENABLE_MTLS`, `ENABLE_WEBSOCKET`, `JOBS`,
+   `WHOLE_IMAGE`). It auto-detects an SDK and skips the target-selection step.
+
+> **WebSocket MTP is on by default** in this feed (`apps/obuspa/Config.in` sets
+> `OBUSPA_WEBSOCKET_MTP_SUPPORT` to `default y` — a deliberate deviation from upstream's `n`), so all four
+> methods produce a WS-capable obuspa that pulls `libwebsockets4-full`. Set it to `n` for STOMP/UDS-only.
+
 ## Using this feed in an OpenWrt / prplOS buildroot
 
 ### Quick start (scripted)
@@ -127,10 +155,13 @@ equivalent is below.
 
 ### Manual steps
 
-Add the local feed (absolute path) to `feeds.conf` (or `feeds.conf.default`):
+Add the feed to `feeds.conf` (or `feeds.conf.default`) — local path or remote git tag:
 
 ```
+# local checkout (absolute path):
 src-link prpl_usp /path/to/prpl-feed
+# or a pinned remote tag:
+src-git prpl_usp https://<host>/<you>/prpl-feed.git;v0.1.0
 ```
 
 Then:
@@ -190,9 +221,10 @@ CONFIG_SAH_AMX_TR181_DEVICE_ORDER=41
 
 ## obuspa specifics
 
-* **WebSocket MTP** is gated by `CONFIG_OBUSPA_WEBSOCKET_MTP_SUPPORT` (see `obuspa/Config.in`). When
-  set, the Makefile drops `--disable-websockets` and adds a dependency on `libwebsockets4-full`.
-  obuspa is also built with `--disable-bulkdata --disable-coap`.
+* **WebSocket MTP** is controlled by `CONFIG_OBUSPA_WEBSOCKET_MTP_SUPPORT` (see `apps/obuspa/Config.in`),
+  which this feed sets to **`default y`** (upstream default is `n`). When enabled the Makefile drops
+  `--disable-websockets` and adds a dependency on `libwebsockets4-full`. obuspa is also built with
+  `--disable-bulkdata --disable-coap`.
 * **Broker / ubus**: the prpl patch set (`obuspa/patches/00x..01x`) turns obuspa into a USP Broker that
   registers the data-model daemons (USP Services) and connects the broker to the controller once the
   critical services have registered. The local data models reach obuspa over USP/UDS; they reach the

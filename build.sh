@@ -95,9 +95,19 @@ for p in "${PKGS[@]}"; do
 done
 
 # --- 3. seed .config ---------------------------------------------------------
-if [ ! -f .config ]; then
-	echo "WARNING: no .config found — generating a bare one with 'make defconfig'." >&2
-	echo "         Run 'make menuconfig' first to choose your TARGET (board/arch)." >&2
+# An OpenWrt *SDK* ships a ready .config with the target (board/arch) already
+# fixed; a full *source* tree does not, and the user must pick a target first.
+# IS_SDK may be forced via env (the container path sets IS_SDK=1); otherwise auto-detect.
+IS_SDK="${IS_SDK:-0}"
+if [ "${IS_SDK}" != "1" ] && [ -f .config ] && grep -q '^CONFIG_TARGET_BOARD=' .config; then
+	IS_SDK=1
+fi
+if [ "${IS_SDK}" = "1" ]; then
+	echo "      detected a preconfigured tree/SDK (target already set) — skipping menuconfig."
+elif [ ! -f .config ]; then
+	echo "WARNING: no .config and no preset target — generating a bare one with 'make defconfig'." >&2
+	echo "         On a full SOURCE tree, run 'make menuconfig' first to choose TARGET (board/arch)." >&2
+	echo "         (OpenWrt SDKs ship a preset .config, so this branch should not hit in an SDK.)" >&2
 	make defconfig
 fi
 echo "[3/4] selecting packages in .config..."
