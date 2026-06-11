@@ -67,9 +67,11 @@ jobs:
       - name: Collect artifacts
         run: |
           mkdir -p out
-          # gh-action-sdk drops ipks under bin/packages/<arch>/<feedname>/
-          find bin -name '*.ipk' -exec cp -v {} out/ \;
-          ls -l out
+          # Our packages land in bin/packages/<arch>/<FEEDNAME>/ — collect ONLY those,
+          # not the SDK's prebuilt base/kmod set that also lives under bin/.
+          find bin -path "*/${FEEDNAME}/*.ipk" -exec cp -v {} out/ \;
+          echo "collected $(find out -name '*.ipk' | wc -l) package(s):"
+          ls -1 out
 
       - name: Upload .ipk artifacts
         uses: actions/upload-artifact@v4
