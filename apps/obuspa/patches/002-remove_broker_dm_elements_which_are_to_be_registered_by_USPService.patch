@@ -4,8 +4,8 @@ Date: Thu, 23 Apr 2026 09:16:23 +0100
 Subject: [PATCH] patch 2
 
 ---
- src/vendor/vendor_defs.h | 14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+ src/vendor/vendor_defs.h | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/src/vendor/vendor_defs.h b/src/vendor/vendor_defs.h
 index b3692fe..e48b2d9 100755
@@ -15,10 +15,8 @@ index b3692fe..e48b2d9 100755
  
  //-----------------------------------------------------------------------------------------
  // Uncomment the following to remove code and features from the standard build
--//#define REMOVE_DEVICE_INFO               // Removes DeviceInfo from the core data model. It must instead be provided by the vendor.
--//#define REMOVE_DEVICE_TIME               // Removes Device.Time from the core data model. It must instead be provided by the vendor.
-+#define REMOVE_DEVICE_INFO               // Removes DeviceInfo from the core data model. It must instead be provided by the vendor.
-+#define REMOVE_DEVICE_TIME               // Removes Device.Time from the core data model. It must instead be provided by the vendor.
+ //#define REMOVE_DEVICE_INFO               // Removes DeviceInfo from the core data model. It must instead be provided by the vendor.
+ //#define REMOVE_DEVICE_TIME               // Removes Device.Time from the core data model. It must instead be provided by the vendor.
  //#define REMOVE_USP_BROKER                // Removes all USP Broker functionality, including Device.USPServices
  //#define REMOVE_USP_SERVICE               // Removes all USP Service functionality
 -//#define REMOVE_DEVICE_REBOOT             // Removes Device.Reboot() from the core data model
