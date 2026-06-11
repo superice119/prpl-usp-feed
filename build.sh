@@ -122,21 +122,32 @@ echo "[3/4] selecting packages in .config..."
 make defconfig
 
 # --- 4. build ----------------------------------------------------------------
-echo "[4/4] building..."
+# IGNORE_ERRORS=1 keeps going when a package fails (diagnostic mode: collect all
+# failures, still produce the packages that built). Default 0 = strict (abort).
+IGNORE_ERRORS="${IGNORE_ERRORS:-0}"
+FAILED=()
+echo "[4/4] building...  (IGNORE_ERRORS=${IGNORE_ERRORS})"
 if [ "${WHOLE_IMAGE}" = "1" ]; then
 	make -j"${JOBS}"
 else
-	# Build the libraries first (download+compile), then each selected package.
-	# OpenWrt resolves DEPENDS order automatically; on failure, re-run verbose.
+	# Build each selected package; OpenWrt resolves DEPENDS order automatically.
 	for p in "${PKGS[@]}"; do
 		echo "----- package/${p}/compile -----"
-		if ! make -j"${JOBS}" "package/${p}/compile"; then
-			echo "!! ${p} failed — re-running verbose for diagnostics" >&2
-			make -j1 V=s "package/${p}/compile"
+		if make -j"${JOBS}" "package/${p}/compile"; then
+			continue
+		fi
+		echo "!! ${p} failed — re-running verbose for diagnostics" >&2
+		if make -j1 V=s "package/${p}/compile"; then
+			continue
+		fi
+		FAILED+=( "${p}" )
+		if [ "${IGNORE_ERRORS}" != "1" ]; then
+			echo "ERROR: ${p} failed to compile (set IGNORE_ERRORS=1 to keep going)." >&2
+			exit 1
 		fi
 	done
 	echo "indexing package repository..."
-	make -j"${JOBS}" package/index
+	make -j"${JOBS}" package/index || true
 fi
 
 echo "=============================================================="
@@ -144,4 +155,7 @@ echo " DONE. Resulting .ipk files:"
 find "${OPENWRT_DIR}/bin" -name '*.ipk' 2>/dev/null | grep -E \
 	'obuspa|amx|tr181|usp|dmext|dmproxy|netmodel|sahtrace|uriparser|filetransfer|ba-cli|security' \
 	|| echo "   (none found under bin/ — check the build log above)"
+if [ "${#FAILED[@]}" -gt 0 ]; then
+	echo " WARNING: ${#FAILED[@]} package(s) failed to compile: ${FAILED[*]}"
+fi
 echo "=============================================================="

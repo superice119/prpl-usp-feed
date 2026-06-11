@@ -44,7 +44,7 @@ values are the upstream-published ones at those commits. Source tarballs are fet
 | libuspprotobuf | v0.5.3 | components/core/libraries/**libprotobuf** | — | feed-prplos | name≠repo |
 | mod-amxb-usp | v5.10.0 | components/ambiorix/modules/amxb_backends/amxb_usp | libamx*, libimtp, libusp, libuspi | feed-prplos | ok |
 | mod-usp-registration | v0.1.1 | components/core/modules/**mod-usp_registration** | libamx*, libsahtrace | feed-prplos | name≠repo |
-| obuspa | v11.0.2 | *(github.com/BroadbandForum/obuspa.git @ 92ecb4c…)* + 12 prpl patches | libsqlite3, libcurl, libmosquitto, [libwebsockets4-full] | feed-prplos | ok |
+| obuspa | v11.0.2 | *(github.com/BroadbandForum/obuspa.git @ 92ecb4c…)* + 12 prpl patches | libsqlite3, libcurl, libmosquitto-ssl, [libwebsockets-full] | feed-prplos | ok |
 | usp-discovery | v0.2.0 | components/core/plugins/usp-discovery | — | feed-prplos | optional |
 | tr181-device | v0.36.0 | components/core/plugins/tr181-device | libamx*, libsahtrace, libamxm, **mod-dmext, mod-dmproxy** | feed-prplos | ok |
 | deviceinfo-manager | v2.41.0 | components/core/plugins/**tr181-deviceinfo** | libamx*, libamxm, libsahtrace, mod-dmext, libfiletransfer, procps-ng | feed-prplos | name≠repo |
@@ -99,7 +99,7 @@ values are the upstream-published ones at those commits. Source tarballs are fet
    init's `RESET_FILE` already points at `/etc/obuspa/factory_reset.txt` (the WebSocket/Oktopus template);
    point it back at `/etc/config/obuspa_param_reset.txt` for the upstream STOMP example.
 3. **External OpenWrt feed packages** (must exist in the target buildroot): `libubus`, `libubox`,
-   `libsqlite3`, `libcurl`, `curl`, `libmosquitto`, `libwebsockets4-full`, `yajl`, `libcap-ng`,
+   `libsqlite3`, `libcurl`, `curl`, `libmosquitto-ssl`, `libwebsockets-full`, `yajl`, `libcap-ng`,
    `libevent2`, `libxml2`, `libopenssl`, `libprotobuf-c`, `procps-ng`, `procps-ng-ps`.
 4. **ODL/init for tr181-***: shipped *inside the component source tarball*, installed by `make install`
    — not present in this feed's `files/`. Start-up ordering is via `rc.d` S/K symlinks generated from

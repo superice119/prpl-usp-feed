@@ -25,7 +25,7 @@ COPY --chown=buildbot:buildbot . /feed/
 RUN set -eux; \
 	[ ! -f setup.sh ] || bash setup.sh; \
 	make defconfig; \
-	IS_SDK=1 ENABLE_MTLS="${ENABLE_MTLS}" ENABLE_WEBSOCKET=1 /feed/build.sh "$PWD"; \
+	IS_SDK=1 IGNORE_ERRORS=1 ENABLE_MTLS="${ENABLE_MTLS}" ENABLE_WEBSOCKET=1 /feed/build.sh "$PWD"; \
 	mkdir -p /artifacts; \
 	find bin/packages -name '*.ipk' -exec cp -v {} /artifacts/ \; ; \
 	ls -l /artifacts

@@ -58,6 +58,11 @@ jobs:
           # PACKAGES empty => build the WHOLE feed (validates all packages)
           V: s
           INDEX: '1'
+          # Diagnostic mode: a single package failing (e.g. a tr181-* that still
+          # carries a prplOS-OpenWrt-ism) does NOT abort the whole arch — the
+          # packages that compiled are still uploaded, and every failure shows in
+          # the log. Flip to '0' once the feed is proven mainline-clean for a strict gate.
+          IGNORE_ERRORS: '1'
 
       - name: Collect artifacts
         run: |

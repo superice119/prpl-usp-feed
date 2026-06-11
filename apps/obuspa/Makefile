@@ -25,8 +25,11 @@ define Package/$(PKG_NAME)
   TITLE:=Provides User Services Platform (USP) Agent.
   DEPENDS +=+libsqlite3
   DEPENDS +=+libcurl
-  DEPENDS +=+libmosquitto
-  DEPENDS+=+OBUSPA_WEBSOCKET_MTP_SUPPORT:libwebsockets4-full
+  # Stock OpenWrt names: mosquitto ships only -ssl/-nossl variants (no bare
+  # libmosquitto), and the libwebsockets "full" variant is libwebsockets-full
+  # (prplOS named these libmosquitto / libwebsockets4-full).
+  DEPENDS +=+libmosquitto-ssl
+  DEPENDS+=+OBUSPA_WEBSOCKET_MTP_SUPPORT:libwebsockets-full
   MENU:=1
 endef
 

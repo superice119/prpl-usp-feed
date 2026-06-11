@@ -102,7 +102,7 @@ them. The right-hand column maps back to the component names used in the origina
 
 > **Self-contained closure:** every `DEPENDS` declared by a package in this feed resolves either to
 > another package in this feed (all prpl/Ambiorix names) or to a stock OpenWrt package
-> (`libubus`, `libsqlite3`, `libcurl`, `curl`, `libmosquitto`, `libwebsockets4-full`, `yajl`,
+> (`libubus`, `libsqlite3`, `libcurl`, `curl`, `libmosquitto-ssl`, `libwebsockets-full`, `yajl`,
 > `libcap-ng`, `libevent2`, `libxml2`, `libopenssl`, `libprotobuf-c`, `procps-ng`, `procps-ng-ps`),
 > which buildroot provides. There are **no unsatisfiable prpl-specific build dependencies**. Verify with:
 > `grep -rhoE 'DEPENDS.*\+[A-Za-z0-9_.:-]+' */*/Makefile` vs `find . -name Makefile`.
@@ -133,7 +133,7 @@ Default OpenWrt release is **24.10.7** (override everywhere via a version arg/in
 
 > **WebSocket MTP is on by default** in this feed (`apps/obuspa/Config.in` sets
 > `OBUSPA_WEBSOCKET_MTP_SUPPORT` to `default y` — a deliberate deviation from upstream's `n`), so all four
-> methods produce a WS-capable obuspa that pulls `libwebsockets4-full`. Set it to `n` for STOMP/UDS-only.
+> methods produce a WS-capable obuspa that pulls `libwebsockets-full`. Set it to `n` for STOMP/UDS-only.
 
 ## Using this feed in an OpenWrt / prplOS buildroot
 
@@ -200,7 +200,7 @@ CONFIG_PACKAGE_mod-amxb-usp=y
 CONFIG_PACKAGE_amxrt=y
 # --- USP agent/broker ---
 CONFIG_PACKAGE_obuspa=y
-CONFIG_OBUSPA_WEBSOCKET_MTP_SUPPORT=y      # enables WebSocket MTP -> pulls libwebsockets4-full
+CONFIG_OBUSPA_WEBSOCKET_MTP_SUPPORT=y      # enables WebSocket MTP -> pulls libwebsockets-full
 CONFIG_PACKAGE_mod-usp-registration=y
 CONFIG_PACKAGE_data-model-mapper=m
 # --- mTLS tooling for obuspa (optional; install if you switch to wss://) ---
@@ -223,7 +223,7 @@ CONFIG_SAH_AMX_TR181_DEVICE_ORDER=41
 
 * **WebSocket MTP** is controlled by `CONFIG_OBUSPA_WEBSOCKET_MTP_SUPPORT` (see `apps/obuspa/Config.in`),
   which this feed sets to **`default y`** (upstream default is `n`). When enabled the Makefile drops
-  `--disable-websockets` and adds a dependency on `libwebsockets4-full`. obuspa is also built with
+  `--disable-websockets` and adds a dependency on `libwebsockets-full`. obuspa is also built with
   `--disable-bulkdata --disable-coap`.
 * **Broker / ubus**: the prpl patch set (`obuspa/patches/00x..01x`) turns obuspa into a USP Broker that
   registers the data-model daemons (USP Services) and connects the broker to the controller once the
@@ -254,7 +254,7 @@ CONFIG_SAH_AMX_TR181_DEVICE_ORDER=41
 
 **Build-time:** none that are prpl-specific. All prpl/Ambiorix `DEPENDS` are satisfied inside this feed
 (31 packages). The only unbundled build deps are **stock OpenWrt packages** provided by buildroot:
-`libubus`, `libubox`, `libsqlite3`, `libcurl`, `curl`, `libmosquitto`, `libwebsockets4-full`, `yajl`,
+`libubus`, `libubox`, `libsqlite3`, `libcurl`, `curl`, `libmosquitto-ssl`, `libwebsockets-full`, `yajl`,
 `libcap-ng`, `libevent2`, `libxml2`, `libopenssl`, `libprotobuf-c`, `procps-ng`, `procps-ng-ps`.
 
 **obuspa mTLS tooling is now bundled.** `mod-ba-cli`(+`amx-cli`,`libamxt`) and `tr181-security` are part
