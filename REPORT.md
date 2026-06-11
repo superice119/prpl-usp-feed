@@ -108,12 +108,14 @@ values are the upstream-published ones at those commits. Source tarballs are fet
    in this environment (no cross-toolchain here). Validate with a real `make package/<p>/compile`.
 6. **`SUBMENU`/`CATEGORY`** are `prpl Foundation`; packages appear there in `menuconfig`, not under a
    generic category.
-7. **Mainline-OpenWrt compatibility is unverified.** These recipes were pinned from prplOS (whose OpenWrt
-   base carries SoftAtHome/prpl patches). Against **stock** OpenWrt 24.10 for `mt7621`/`rk3308`, some
-   packages may need tweaks (procd/ubus assumptions, `CONFIG_SAH_*` defaults, libwebsockets variant). The
-   three build methods (CI, container, SDK) exist precisely to surface this — treat the first green CI run
-   as the real compatibility gate. `rk3308` board *images* are out of scope (packages are arch-only:
-   `aarch64_generic`).
+7. **Mainline-OpenWrt compatibility — VERIFIED GREEN.** These recipes were pinned from prplOS (whose
+   OpenWrt base carries SoftAtHome/prpl patches), so stock-OpenWrt compilation was the open risk. The
+   GitHub CI build against **stock OpenWrt 24.10.7** compiled **all 35/35 packages cleanly for both
+   targets** — `mt7621` (`mipsel_24kc`) and `rk3308` (`aarch64_generic`) — including `obuspa_v11.0.2-r3`
+   (WebSocket MTP on), every `tr181-*`, all `libamx*`, the amxb backends and the mTLS tooling.
+   (Run `27324298163` on `superice119/prpl-usp-feed`, 2026-06-11.) The `libwebsockets-full` /
+   `libmosquitto-ssl` stock-name fixes were validated by this run. `rk3308` board *images* remain out of
+   scope (packages are arch-only: `aarch64_generic`).
 
 ## Next steps in an OpenWrt buildroot
 
