@@ -1,0 +1,118 @@
+#!/bin/sh /etc/rc.common
+
+START=25
+STOP=02
+USE_PROCD=1
+
+PROG=/usr/bin/obuspa
+CONFIGURATION=obuspa
+
+# WebSocket-MTP factory-reset DB (Oktopus). The STOMP example remains at
+# /etc/config/obuspa_param_reset.txt if you need to switch back.
+RESET_FILE="/etc/obuspa/factory_reset.txt"
+SQL_DB_FILE="/etc/obuspa.db"
+
+# Points to CA Bundle data model entry relevant for USP communication.
+# Empty = non-mTLS (plain ws://): no certificate lookup is performed and `ba-cli` is never called.
+# For mTLS (wss://): set to e.g. "Security.CABundle.test", install mod-ba-cli (+libamxt) and
+# tr181-security, and the script will resolve the CA/cert/key paths from the Security.* data model.
+CA_BUNDLE=""
+# Points to device private key and certificate data model entry relevant for USP communication.
+# For non-mTLS communication shall be empty (see comment above for the mTLS counterpart).
+DEVICE_KEY_CERT=""
+
+get_ca_bundle_file_path() {
+	[ -z "${1}" ] && return 0
+	local BUNDLE_URI=$(ba-cli -l "${1}.CAFile()" | grep "CAFile = " | cut -d '"' -f2)
+	echo ${BUNDLE_URI#file://}
+}
+
+get_certificate_path() {
+	[ -z "${1}" ] && return 0
+	local FILE_URI=$(ba-cli -l "${1}.GetCertificateURI()" | grep "CertificateURI = " | cut -d '"' -f2)
+	echo ${FILE_URI#file://}
+}
+
+get_private_key_uri() {
+	[ -z "${1}" ] && return 0
+	ba-cli -l "${1}.GetCertificateURI()" | grep "PrivateKeyURI = " | cut -d '"' -f2
+}
+
+get_wait_ca_bundle()
+{
+	local COUNT=0
+	local BUNDLE_PATH=""
+
+	# return immediately if authentication / encryption is not required
+	if [ -z "${1}" ]; then
+		return 0
+	fi
+
+	# tr181-security that provides the Security data model starts before obuspa.
+	# Wait is only added for extra robustness.
+	while [ "$COUNT" -lt 5 ] && [ -z "$BUNDLE_PATH" ]; do
+		BUNDLE_PATH=$(get_ca_bundle_file_path "${1}")
+		if [ -z "$BUNDLE_PATH" ]; then
+			# echo "Waiting for CA bundle path ($COUNT)" >&2
+			sleep 1
+		fi
+		COUNT=$((COUNT + 1))
+	done
+	echo "$BUNDLE_PATH"
+}
+
+register_service()
+{
+	procd_open_instance ${CONFIGURATION}
+	procd_set_param command ${PROG}
+
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+
+	CA_FILE=$(get_wait_ca_bundle $CA_BUNDLE)
+	CERTIFICATE_URI=$(get_certificate_path ${DEVICE_KEY_CERT})
+	PRIVATE_KEY_URI=$(get_private_key_uri ${DEVICE_KEY_CERT})
+
+	# echo "CA_FILE=${CA_FILE}"
+	# echo "CERTIFICATE_URI=${CERTIFICATE_URI}"
+	# echo "PRIVATE_KEY_URI=${PRIVATE_KEY_URI}"
+
+	boardserial=$(source /etc/environment 2>/dev/null ; echo $SERIALNUMBER)
+	boardoui=$(source /etc/environment 2>/dev/null ; echo $MANUFACTUREROUI)
+	procd_set_param env USP_BOARD_SERIAL="${boardserial}" \
+						USP_BOARD_OUI="${boardoui}" \
+						CertificateURI="${CERTIFICATE_URI}" \
+						PrivateKeyURI="${PRIVATE_KEY_URI}"
+
+	# -p Enables trace logging of the USP protocol messages. Enable setting -p option to utilize prototracing
+	# procd_append_param command -p
+
+	# Log to /var/log/obuspa instead of syslog
+	# procd_append_param command -l /var/log/obuspa
+
+	# -v Sets the debug verbosity log level: 0=Off, 1=Error(default), 2=Warning, 3=Info
+	# procd_append_param command -v 2
+	if [ -f "${CA_FILE}" ]; then
+		procd_append_param command -t ${CA_FILE}
+	fi
+	procd_append_param command -r ${RESET_FILE} -f ${SQL_DB_FILE}
+	procd_set_param respawn \
+			"${respawn_threshold:-10}" \
+			"${respawn_timeout:-10}" "${respawn_retry:-5}"
+
+	procd_close_instance
+}
+
+start_service() {
+	mkdir -p /var/run/usp/
+	register_service
+}
+
+stop_service() {
+	${PROG} -c stop >/dev/null 2>&1
+}
+
+reload_service() {
+	stop
+	start update
+}

@@ -1,0 +1,15 @@
+config PACKAGE_data-model-mapper
+    tristate
+
+if PACKAGE_data-model-mapper
+
+menu "Select data-model-mapper build options"
+    depends on PACKAGE_data-model-mapper
+
+config DMM_DATA_MODEL_MAPPER_ORDER
+    int "Start up order data-model-mapper plugin"
+    default 54
+
+endmenu
+
+endif

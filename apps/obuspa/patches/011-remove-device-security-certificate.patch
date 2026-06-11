@@ -1,0 +1,29 @@
+From 3e0d658b78c48244d723ac3fcf7d72574050c057 Mon Sep 17 00:00:00 2001
+From: Sergio Panseri <sergio.panseri@consult.red>
+Date: Mon, 6 Oct 2025 15:46:47 +0200
+Subject: [PATCH] Added define REMOVE_DEVICE_SECURITY_CERTIFICATE to remove OBUSPA's own Device.Security. tree
+
+Define REMOVE_DEVICE_SECURITY_CERTIFICATE to expose tr181-security's:
+Device.Security.Certificate.
+Device.Security.CABundle.
+to obuspa and therefore to the outside world over USP.
+---
+ src/vendor/vendor_defs.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/vendor/vendor_defs.h b/src/vendor/vendor_defs.h
+index ba309ec..d0fcf70 100755
+--- a/src/vendor/vendor_defs.h
++++ b/src/vendor/vendor_defs.h
+@@ -142,7 +142,7 @@
+ #define REMOVE_DEVICE_SCHEDULE_TIMER     // Removes Device.ScheduleTimer() from the core data model
+ #define REMOVE_DEVICE_BOOT_EVENT         // Removes Device.Boot! from the core data model
+ //#define REMOVE_DEVICE_SECURITY           // Removes all certificate and TLS related code. Removes DM elements Device.Security, Device.LocalAgent.Certificate and ControllerTrust Challenge/Response mechanism
+-//#define REMOVE_DEVICE_SECURITY_CERTIFICATE    // Removes Device.Security.Certificate and Device.Security from the core data model
++#define REMOVE_DEVICE_SECURITY_CERTIFICATE    // Removes Device.Security.Certificate and Device.Security from the core data model
+ #define REMOVE_SELF_TEST_DIAG_EXAMPLE    // Removes Self Test diagnostics example code
+ 
+ //#define DONT_SORT_GET_INSTANCES          // Disables the sorting of data model paths returned in a GetInstancesResponse. Useful for slow devices supporting large data models.
+-- 
+2.43.0
+

@@ -1,0 +1,8 @@
+menu "Select obuspa build options"
+    depends on PACKAGE_obuspa
+
+config OBUSPA_WEBSOCKET_MTP_SUPPORT
+    bool "Whether WebSocket MTP support is enabled in the obuspa"
+    default n
+
+endmenu

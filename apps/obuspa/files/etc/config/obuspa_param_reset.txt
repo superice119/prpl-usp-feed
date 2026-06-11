@@ -1,0 +1,94 @@
+##########################################################################################################
+#
+# This file contains a factory reset database in text format
+#
+# If no USP database exists when OB-USP-AGENT starts, then OB-USP-AGENT will create a database containing
+# the parameters specified in a text file located by the '-r' option.
+# Example:
+#    obuspa -p -v 4 -r factory_reset_example.txt
+#
+# Each line of this file contains either a comment (denoted by '#' at the start of the line)
+# or a USP data model parameter and its factory reset value.
+# The parameter and value are separated by whitespace.
+# The value may optionally be enclosed in speech marks "" (this is the only way to specify an empty string)
+#
+##########################################################################################################
+
+#
+# The following parameters will definitely need modifying
+#
+Device.LocalAgent.Controller.1.EndpointID "proto::controller-id"
+Device.STOMP.Connection.1.Host "controller.cdroutertest.com"
+Device.STOMP.Connection.1.Username "qacafe"
+Device.STOMP.Connection.1.Password "qacafe123"
+
+Device.LocalAgent.EndpointID "proto::agent-id"
+
+#
+# The following parameters may be modified
+#
+Device.LocalAgent.MTP.1.Alias "cpe-1"
+Device.LocalAgent.MTP.1.Enable "true"
+Device.LocalAgent.MTP.1.Protocol "STOMP"
+Device.LocalAgent.MTP.1.STOMP.Reference "Device.STOMP.Connection.1"
+Device.LocalAgent.MTP.1.STOMP.Destination "/queue/agent-1"
+Device.LocalAgent.Controller.1.Alias "cpe-1"
+Device.LocalAgent.Controller.1.Enable "true"
+Device.LocalAgent.Controller.1.AssignedRole "Device.LocalAgent.ControllerTrust.Role.1"
+Device.LocalAgent.Controller.1.PeriodicNotifInterval "86400"
+Device.LocalAgent.Controller.1.PeriodicNotifTime "0001-01-01T00:00:00Z"
+Device.LocalAgent.Controller.1.USPNotifRetryMinimumWaitInterval "5"
+Device.LocalAgent.Controller.1.USPNotifRetryIntervalMultiplier "2000"
+Device.LocalAgent.Controller.1.ControllerCode ""
+Device.LocalAgent.Controller.1.MTP.1.Alias "cpe-1" 
+Device.LocalAgent.Controller.1.MTP.1.Enable "true"
+Device.LocalAgent.Controller.1.MTP.1.Protocol "STOMP"
+Device.LocalAgent.Controller.1.MTP.1.STOMP.Reference "Device.STOMP.Connection.1"
+Device.LocalAgent.Controller.1.MTP.1.STOMP.Destination "/controller-path"
+Device.STOMP.Connection.1.Alias "cpe-1"
+Device.STOMP.Connection.1.Enable "true"
+Device.STOMP.Connection.1.Port "61614"
+Device.STOMP.Connection.1.EnableEncryption "true"
+Device.STOMP.Connection.1.VirtualHost "/"
+Device.STOMP.Connection.1.EnableHeartbeats "true"
+Device.STOMP.Connection.1.OutgoingHeartbeat "30000"
+Device.STOMP.Connection.1.IncomingHeartbeat "300000"
+Device.STOMP.Connection.1.ServerRetryInitialInterval "60"
+Device.STOMP.Connection.1.ServerRetryIntervalMultiplier "1000"
+Device.STOMP.Connection.1.ServerRetryMaxInterval "30720"
+Device.LocalAgent.X_VANTIVA-COM_PreConnectTimeout "600"
+
+# For USP service
+Device.UnixDomainSockets.UnixDomainSocket.1.Alias "USP_UDS_Unauthenticated:Controller"
+Device.UnixDomainSockets.UnixDomainSocket.1.Mode "Listen"
++Device.UnixDomainSockets.UnixDomainSocket.1.AuthRequired "false"
++Device.UnixDomainSockets.UnixDomainSocket.1.RegistrationRestricted "false"
+Device.UnixDomainSockets.UnixDomainSocket.1.Path "/var/run/usp/broker_controller_path"
+
+Device.UnixDomainSockets.UnixDomainSocket.2.Alias "USP_UDS_Unauthenticated:Agent"
+Device.UnixDomainSockets.UnixDomainSocket.2.Mode "Listen"
++Device.UnixDomainSockets.UnixDomainSocket.2.AuthRequired "false"
++Device.UnixDomainSockets.UnixDomainSocket.2.RegistrationRestricted "false"
+Device.UnixDomainSockets.UnixDomainSocket.2.Path "/var/run/usp/broker_agent_path"
+
++Device.UnixDomainSockets.UnixDomainSocket.3.Alias "USP_UDS_Authenticated:Controller"
++Device.UnixDomainSockets.UnixDomainSocket.3.Mode "Listen"
++Device.UnixDomainSockets.UnixDomainSocket.3.AuthRequired "true"
++Device.UnixDomainSockets.UnixDomainSocket.3.RegistrationRestricted "true"
++Device.UnixDomainSockets.UnixDomainSocket.3.Path "/var/run/usp/sockets/authenticated/broker_controller/broker_controller_path"
+
++Device.UnixDomainSockets.UnixDomainSocket.4.Alias "USP_UDS_Authenticated:Agent"
++Device.UnixDomainSockets.UnixDomainSocket.4.Mode "Listen"
++Device.UnixDomainSockets.UnixDomainSocket.4.AuthRequired "true"
++Device.UnixDomainSockets.UnixDomainSocket.4.RegistrationRestricted "true"
++Device.UnixDomainSockets.UnixDomainSocket.4.Path "/var/run/usp/sockets/authenticated/broker_agent/broker_agent_path"
+
+
++Device.LocalAgent.MTP.2.Alias  "cpe-2"
++Device.LocalAgent.MTP.2.Protocol  "UDS"
++Device.LocalAgent.MTP.2.UDS.UnixDomainSocketRef  "Device.UnixDomainSockets.UnixDomainSocket.2"
++Device.LocalAgent.MTP.2.Enable  "true"
++Device.LocalAgent.MTP.3.Alias  "cpe-3"
++Device.LocalAgent.MTP.3.Protocol  "UDS"
++Device.LocalAgent.MTP.3.UDS.UnixDomainSocketRef  "Device.UnixDomainSockets.UnixDomainSocket.4"
++Device.LocalAgent.MTP.3.Enable  "true"

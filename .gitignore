@@ -1,0 +1,9 @@
+# OS / editor cruft
+.DS_Store
+*.swp
+*~
+
+# OpenWrt build artifacts (this is a feed, not a buildroot — nothing should land here)
+/dl/
+*.ipk
+tmp/

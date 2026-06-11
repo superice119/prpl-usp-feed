@@ -1,0 +1,32 @@
+config PACKAGE_libamxrt
+    tristate
+    select SAH_LIB_AMXRT
+
+if PACKAGE_libamxrt
+
+menu "Select libamxrt build options"
+    depends on PACKAGE_libamxrt
+
+config SAH_LIB_AMXRT
+    bool "Build libamxrt"
+    default y
+    select KERNEL_EXT4_FS_SECURITY if USES_EXT4 || PACKAGE_kmod-fs-ext4
+    select KERNEL_JFFS2_FS_SECURITY if USES_JFFS2 || USES_JFFS2_NAND
+    select KERNEL_UBIFS_FS_SECURITY if USES_UBIFS
+    select KERNEL_F2FS_FS_SECURITY if PACKAGE_mkf2fs
+
+config SAH_AMXRT_RWDATAPATH
+    string "Persistent storage location"
+    default "/etc/config"
+
+config FORCE_RUNNING_AS_ROOT
+    bool "INSECURE: This options forces ambiorix components to run as the root user, even if they request to run as a different user"
+    default y
+
+config REMOVE_CAPS_ODLS
+    bool "INSECURE: This option removes all the capability ODLs (*_caps.odl) from /etc/amx and subdirectories during first boot. This will also force all components to run as root"
+    default y
+
+endmenu
+
+endif

@@ -1,0 +1,79 @@
+From: Sandesh Mahale <sandesh.mahale@vantiva.com>
+Date: Fri, 29 Mar 2024
+Subject: [PATCH] obuspa: USP Broker should not connect to Controller ACS until critical USP Services have registered
+
+Vendor hook implementation to ensure OB-USP-A will not connect to controller till WAN is up, NTP time has been
+acquired and Device.DeviceInfo datamodel have been registered with OB-USP-A.
+
+Signed-off-by: Sandesh Mahale <sandesh.mahale@vantiva.com>
+
+diff --git a/src/vendor/vendor.c b/src/vendor/vendor.c
+index b205faf..1ffba87 100644
+--- a/src/vendor/vendor.c
++++ b/src/vendor/vendor.c
+@@ -42,12 +42,54 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <stdbool.h>
++#include <string.h>
+ 
+ #include "usp_err_codes.h"
+ #include "vendor_defs.h"
+ #include "vendor_api.h"
+ #include "usp_api.h"
+ 
++#define DM_TIME_STATUS "Device.Time.Status"
++#define DM_DEVICE_DEVICEINFO "Device.DeviceInfo."
++
++static bool can_mtp_connect(void)
++{
++   char time_status[50];
++   int err;
++
++   // Exit if tr181-device has not registered the critical objects it provides for the data model
++   if (USP_DM_IsRegistered(DM_DEVICE_DEVICEINFO) == false)
++   {
++       USP_LOG_Warning("%s: Not connecting to Controller ACS as DeviceInfo is not registerd yet", __FUNCTION__);
++       return false;
++   }
++
++   // Exit if tr181-device has not registered the Device.Time data model
++   if (USP_DM_IsRegistered(DM_TIME_STATUS) == false)
++   {
++       USP_LOG_Warning("%s: Not connecting to Controller ACS as data model Time is not registerd yet", __FUNCTION__);
++       return false;
++   }
++
++   // Exit if NTP time status could not be queried (this is needed for certificate validity checks to pass)
++   err = USP_DM_GetParameterValue(DM_TIME_STATUS, time_status, sizeof(time_status));
++   if( err != USP_ERR_OK)
++   {
++      USP_LOG_Warning("%s: Not connecting to Controller ACS as unable to get Time.Status (err=%d)", __FUNCTION__, err);
++      return false;
++   }
++
++   // Exit if NTP time has not been synced (this is needed for certificate validity checks to pass)
++   if(strcmp(time_status, "Synchronized") != 0)
++   {
++      USP_LOG_Warning("%s: Not connecting to Controller ACS as NTP time has not been acquired (time_status=%s)", __FUNCTION__, time_status);
++      return false;
++   }
++
++   return true;
++}
++
++
+ /*********************************************************************//**
+ **
+ ** VENDOR_Init
+@@ -61,6 +103,10 @@
+ **************************************************************************/
+ int VENDOR_Init(void)
+ {
++    vendor_hook_cb_t callbacks;
++    memset(&callbacks, 0, sizeof(callbacks));
++    callbacks.can_mtp_connect_cb = can_mtp_connect;
++    USP_REGISTER_CoreVendorHooks(&callbacks);
+ 
+     return USP_ERR_OK;
+ }

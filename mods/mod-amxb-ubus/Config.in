@@ -1,0 +1,20 @@
+config PACKAGE_mod-amxb-ubus
+    tristate
+    select SAH_LIB_AMXB_UBUS
+
+if PACKAGE_mod-amxb-ubus
+
+menu "Select mod-amxb-ubus build options"
+    depends on PACKAGE_mod-amxb-ubus
+
+config SAH_LIB_AMXB_UBUS
+    bool "Build ubus backend for ambiorix"
+    default y
+
+config SAH_LIB_AMXB_UBUS_ORDER
+    string "Backend load order"
+    default "05-"
+
+endmenu
+
+endif

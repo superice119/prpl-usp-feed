@@ -1,0 +1,57 @@
+##########################################################################################################
+#
+# WebSocket-MTP factory-reset template for connecting obuspa to a USP Controller (e.g. Oktopus).
+#
+# This is an ALTERNATIVE to the STOMP-based ../config/obuspa_param_reset.txt that prpl ships by default.
+# To use it, point the init script (/etc/init.d/obuspa) at this file:
+#       RESET_FILE="/etc/obuspa/factory_reset.txt"
+# and rebuild obuspa with WebSocket MTP enabled:
+#       CONFIG_OBUSPA_WEBSOCKET_MTP_SUPPORT=y   (pulls in libwebsockets4-full)
+#
+# Format: one "Device.<path> <value>" per line; value may be quoted. Lines starting with '#' are comments.
+# Only the lines marked <<< FILL IN >>> normally need editing for a given deployment.
+#
+##########################################################################################################
+
+# ---- Agent identity -------------------------------------------------------------------------------------
+# Unique Endpoint ID of THIS gateway. Convention: "os::<OUI>-<serial>" or "proto::<id>".
+# The init script also exports USP_BOARD_OUI / USP_BOARD_SERIAL from /etc/environment; you may instead
+# leave a self-generated EndpointID by removing this line.
+Device.LocalAgent.EndpointID                                   "os::00256D-OpenWrtGateway001"   # <<< FILL IN >>>
+
+# ---- Controller (Oktopus) identity & trust --------------------------------------------------------------
+Device.LocalAgent.Controller.1.Alias                           "oktopus"
+Device.LocalAgent.Controller.1.Enable                          "true"
+Device.LocalAgent.Controller.1.EndpointID                      "proto::oktopus-controller"      # <<< FILL IN >>> (must match the Controller's USP EndpointID)
+Device.LocalAgent.Controller.1.AssignedRole                    "Device.LocalAgent.ControllerTrust.Role.1"
+Device.LocalAgent.Controller.1.PeriodicNotifInterval           "86400"
+
+# ---- Controller MTP: WebSocket client connection --------------------------------------------------------
+Device.LocalAgent.Controller.1.MTP.1.Alias                     "oktopus-ws"
+Device.LocalAgent.Controller.1.MTP.1.Enable                    "true"
+Device.LocalAgent.Controller.1.MTP.1.Protocol                  "WebSocket"
+Device.LocalAgent.Controller.1.MTP.1.WebSocket.Host            "192.0.2.1"                      # <<< FILL IN >>> Oktopus server IP / FQDN
+Device.LocalAgent.Controller.1.MTP.1.WebSocket.Port            "8080"                           # <<< FILL IN >>> Oktopus USP WebSocket port
+Device.LocalAgent.Controller.1.MTP.1.WebSocket.Path            "/ws"                            # <<< FILL IN >>> WebSocket resource path
+Device.LocalAgent.Controller.1.MTP.1.WebSocket.EnableEncryption "false"                         # set "true" + provide CA bundle (-t) for wss://
+
+# ---- Agent MTP: WebSocket -------------------------------------------------------------------------------
+# obuspa connects OUT to the Controller as a WebSocket client, so the agent-side MTP only needs to enable
+# the WebSocket binding. (No listening server is required for the Oktopus client-connect model.)
+Device.LocalAgent.MTP.1.Alias                                  "agent-ws"
+Device.LocalAgent.MTP.1.Enable                                 "true"
+Device.LocalAgent.MTP.1.Protocol                               "WebSocket"
+
+# ---- USP Broker sockets (so tr181-* USP Services can register over UDS) ----------------------------------
+# These let obuspa act as a USP Broker that aggregates the local data-model daemons via Unix Domain Sockets.
+Device.UnixDomainSockets.UnixDomainSocket.1.Alias              "broker-controller"
+Device.UnixDomainSockets.UnixDomainSocket.1.Mode               "Listen"
+Device.UnixDomainSockets.UnixDomainSocket.1.Path               "/var/run/usp/broker_controller_path"
+Device.UnixDomainSockets.UnixDomainSocket.2.Alias              "broker-agent"
+Device.UnixDomainSockets.UnixDomainSocket.2.Mode               "Listen"
+Device.UnixDomainSockets.UnixDomainSocket.2.Path               "/var/run/usp/broker_agent_path"
+
+Device.LocalAgent.MTP.2.Alias                                  "agent-uds"
+Device.LocalAgent.MTP.2.Enable                                 "true"
+Device.LocalAgent.MTP.2.Protocol                               "UDS"
+Device.LocalAgent.MTP.2.UDS.UnixDomainSocketRef                "Device.UnixDomainSockets.UnixDomainSocket.2"

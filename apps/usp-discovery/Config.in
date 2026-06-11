@@ -1,0 +1,16 @@
+menu "Select usp-discovery build options"
+    depends on PACKAGE_usp-discovery
+
+config DMM_USP_DISCOVERY_ORDER
+    int "Start up order usp-discovery plugin"
+    default 99
+
+config USP_DISCOVERY_SUPPORT_MQTT_MTP
+    bool "Whether MQTT MTP is supported for USP Controller discovery"
+    default n
+
+config USP_DISCOVERY_SUPPORT_STOMP_MTP
+    bool "Whether STOMP MTP is supported for USP Controller discovery"
+    default n
+
+endmenu

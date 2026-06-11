@@ -1,0 +1,29 @@
+From f865213b10947d8689430dbe0d2743ca0ac50e68 Mon Sep 17 00:00:00 2001
+From: Richard Holme <richard.holme@vantiva.com>
+Date: Mon, 27 Apr 2026 17:32:19 +0100
+Subject: [PATCH] OBUSPA-441: Device.LocalAgent.ControllerTrust.UntrustedRole
+
+---
+ src/core/device_ctrust.c | 3 +++
+ 1 file changed, 3 insertions(+)
+ mode change 100644 => 100755 src/core/device_ctrust.c
+
+diff --git a/src/core/device_ctrust.c b/src/core/device_ctrust.c
+old mode 100644
+new mode 100755
+index d5f0c47..4cfa7d3
+--- a/src/core/device_ctrust.c
++++ b/src/core/device_ctrust.c
+@@ -368,6 +368,9 @@ int DEVICE_CTRUST_Init(void)
+                         NULL, 0);
+ #endif
+ 
++    // Parameters that reference roles
++    err |= USP_REGISTER_Param_Constant(DEVICE_CTRUST_ROOT ".UntrustedRole", "Device.LocalAgent.ControllerTrust.Role." TO_STR(ROLE_UNTRUSTED), DM_STRING);
++
+     // Initialise search expression based permissions components
+     SE_CACHE_Init();
+ 
+-- 
+2.7.4
+

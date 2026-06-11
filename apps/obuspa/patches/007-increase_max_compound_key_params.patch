@@ -1,0 +1,28 @@
+From ace8e42694e6a3554107a1153f991e1d595c8fe3 Mon Sep 17 00:00:00 2001
+From: Richard Holme <richard.holme@vantiva.com>
+Date: Mon, 4 Aug 2025 18:48:14 +0100
+Subject: [PATCH] Increase MAX_COMPOUND_KEY_PARAMS
+
+---
+ src/vendor/vendor_defs.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+ mode change 100644 => 100755 src/vendor/vendor_defs.h
+
+diff --git a/src/vendor/vendor_defs.h b/src/vendor/vendor_defs.h
+old mode 100644
+new mode 100755
+index 97bcc52..2de5345
+--- a/src/vendor/vendor_defs.h
++++ b/src/vendor/vendor_defs.h
+@@ -55,7 +55,7 @@
+ #define MAX_ENDPOINT_ID_LEN (256)   // Maximum number of characters in an Endpoint ID
+ #define MAX_MSG_ID_LEN (256)        // Maximum number of characters in a USP message ID allocated by this Agent
+ #define MAX_PATH_SEGMENTS (32)      // Maximum number of segments (eg "Device, "LocalAgent") in a path. Does not include instance numbers.
+-#define MAX_COMPOUND_KEY_PARAMS 4   // Maximum number of parameters in a compound unique key
++#define MAX_COMPOUND_KEY_PARAMS 8   // Maximum number of parameters in a compound unique key
+ #define MAX_SEARCH_KEYS 10          // Maximum number of parameters in a search expression
+ 
+ #define MAX_CONTROLLERS 5           // Maximum number of controllers which may be present in the DB (Device.LocalAgent.Controller.{i})
+-- 
+2.7.4
+

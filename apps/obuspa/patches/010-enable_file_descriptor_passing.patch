@@ -1,0 +1,25 @@
+From eae3ecde7bf5683b73efa176a07be4f104664f9f Mon Sep 17 00:00:00 2001
+From: Richard Holme <richard.holme@vantiva.com>
+Date: Fri, 20 Feb 2026 10:12:44 +0000
+Subject: [PATCH] enable_file_descriptor_passing
+
+---
+ src/vendor/vendor_defs.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/vendor/vendor_defs.h b/src/vendor/vendor_defs.h
+index 7b8f140..f98b511 100644
+--- a/src/vendor/vendor_defs.h
++++ b/src/vendor/vendor_defs.h
+@@ -241,7 +241,7 @@
+ //-----------------------------------------------------------------------------------------
+ // Uncomment the following define to include file descriptor passing via the UDS MTP
+ // This is experimental as it doesn't match the USP Specification for the feature being discussed
+-//#define FD_PASSING_EXPERIMENTAL
++#define FD_PASSING_EXPERIMENTAL
+ 
+ //-----------------------------------------------------------------------------------------
+ // Instance numbers of roles in Device.LocalAgent.Controller.Role.{i}
+-- 
+2.34.1
+

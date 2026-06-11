@@ -1,0 +1,25 @@
+From 774526901b1bd7829a97270a93d95b3b7df855a1 Mon Sep 17 00:00:00 2001
+From: Richard Holme <richard.holme@vantiva.com>
+Date: Tue, 10 Feb 2026 14:50:28 +0000
+Subject: [PATCH] remove add certificate support
+
+---
+ src/vendor/vendor_defs.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/vendor/vendor_defs.h b/src/vendor/vendor_defs.h
+index ae5a13c..4c663ad 100755
+--- a/src/vendor/vendor_defs.h
++++ b/src/vendor/vendor_defs.h
+@@ -269,7 +269,7 @@
+ 
+ //-----------------------------------------------------------------------------------------
+ // Comment out the following line to remove the AddCertificate() and Delete() certificate support
+-#define ADD_CERT_SUPPORT
++//#define ADD_CERT_SUPPORT
+ 
+ // Location of directory used to store trust store certificates which are capable of being added/deleted by a USP Controller
+ // NOTE: As the certs need to be stored persistently, this should be changed to a directory which is not cleared on boot up
+-- 
+2.7.4
+

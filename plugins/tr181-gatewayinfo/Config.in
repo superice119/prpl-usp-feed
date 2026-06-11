@@ -1,0 +1,9 @@
+config PACKAGE_tr181-gatewayinfo
+
+menu "Select tr181-gatewayinfo build options"
+    depends on PACKAGE_tr181-gatewayinfo
+
+config DMM_TR181_GATEWAYINFO_ORDER
+    int "Start up order tr181-gatewayinfo plugin"
+    default 99
+endmenu

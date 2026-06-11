@@ -1,0 +1,20 @@
+config PACKAGE_amxrt
+    tristate
+    select SAH_SERVICES_AMXRT
+
+if PACKAGE_amxrt
+
+menu "Select amxrt build options"
+    depends on PACKAGE_amxrt
+
+config SAH_SERVICES_AMXRT
+    bool "Build libamxrt application"
+    default y
+
+config SAH_SERVICES_AMXRT_PROCD_INIT_FUNCTIONS
+    bool "Adds the procd init functions script in stead of the non-procd init functions script"
+    default PACKAGE_procd
+
+endmenu
+
+endif

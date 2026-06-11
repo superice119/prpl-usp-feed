@@ -1,0 +1,31 @@
+# ---------------------------------------------------------------------------
+# Example feeds.conf for building the prpl-feed (USP / Ambiorix) packages.
+#
+# Copy this to <openwrt-source>/feeds.conf and adjust:
+#   * the standard-feed branch/revision to match YOUR OpenWrt checkout
+#     (e.g. openwrt-23.05, openwrt-24.10, or main). The stock dependencies
+#     (libubus, libsqlite3, libcurl, libmosquitto, libwebsockets4-full, yajl,
+#      libcap-ng, libevent2, libxml2, libopenssl, libprotobuf-c, procps-ng …)
+#     come from these feeds + OpenWrt core, so they must match your tree.
+#   * the absolute path in the last line to where THIS feed lives.
+# ---------------------------------------------------------------------------
+
+# --- standard OpenWrt feeds (provide the stock deps) ---
+src-git packages https://git.openwrt.org/feed/packages.git
+src-git luci https://git.openwrt.org/project/luci.git
+src-git routing https://git.openwrt.org/feed/routing.git
+src-git telephony https://git.openwrt.org/feed/telephony.git
+
+# Pin to your OpenWrt release instead of tracking the tip, e.g.:
+#   src-git packages https://git.openwrt.org/feed/packages.git;openwrt-24.10
+#   src-git luci     https://git.openwrt.org/project/luci.git;openwrt-24.10
+
+# --- this feed (local, absolute path) ---
+src-link prpl_usp /path/to/prpl-feed
+
+# If you also want the *transitive* prpl components that this minimal feed
+# intentionally does not duplicate (full data-model stack, wifi, etc.), add
+# the upstream prplOS feeds pinned to the SAME snapshot used here:
+#   src-git feed_amx    https://gitlab.com/prpl-foundation/prplos/feeds/feed_amx.git;prplware-v5.0.0
+#   src-git feed_prplos https://gitlab.com/prpl-foundation/prplos/feeds/feed-prplos.git;prplware-v5.0.0
+# (List prpl_usp BEFORE them so your local versions win on name collisions.)

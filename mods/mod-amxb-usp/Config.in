@@ -1,0 +1,24 @@
+config PACKAGE_mod-amxb-usp
+    tristate
+    select SAH_MOD_AMXB_USP
+
+if PACKAGE_mod-amxb-usp
+
+menu "Select mod-amxb-usp build options"
+    depends on PACKAGE_mod-amxb-usp
+
+config SAH_MOD_AMXB_USP
+    bool "Build the USP backend for ambiorix"
+    default y
+
+config SAH_MOD_AMXB_USP_INSTALL_DIR
+    string "Installation directory for the USP backend"
+    default "/usr/bin/mods/usp"
+
+config SAH_MOD_AMXB_USP_REQUIRES_DEVICE_PREFIX
+    bool "System wide default value for requires-device-prefix, which can be overwritten at odl level"
+    default n
+
+endmenu
+
+endif
