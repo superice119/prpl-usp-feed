@@ -40,8 +40,8 @@ nesting is purely organisational — `make package/<PKG_NAME>/compile` is unaffe
 prpl-feed/
 ├── libs/      Ambiorix core libs, USP protocol libs, netmodel, filetransfer, uriparser, libamxt (19)
 ├── mods/      bus backends + data-model/USP modules + mod-ba-cli                                  (6)
-├── apps/      amxrt, amxo-cg, amx-cli, obuspa agent, usp-discovery, data-model-mapper             (6)
-└── plugins/   tr181 data-model daemons (device, deviceinfo, gatewayinfo, security)                (4)
+├── apps/      amxrt, amxo-cg, amx-cli, obuspa agent, usp-discovery, data-model-mapper, chrony-prpl (7)
+└── plugins/   tr181 data-model daemons (device, deviceinfo, time, gatewayinfo, security)           (5)
 ```
 
 ## What's in the feed
@@ -74,6 +74,7 @@ them. The right-hand column maps back to the component names used in the origina
 | `amxo-cg`       | v1.11.1 | amxo-cg (ODL code-gen, dev tool) |
 | `amx-cli`       | v0.6.0  | *(interactive bus CLI; dep of mod-ba-cli)* |
 | `mod-ba-cli`    | v0.17.0 | *(provides `ba-cli` — used by obuspa init for mTLS cert lookup)* |
+| `chrony-prpl`   | gen_4.6.1_v0.1.0 | *(NTP daemon `chronyd`/`chronyc`; the time backend `time-manager` drives. `PROVIDES:=chrony`, `CONFLICTS:=chrony`)* |
 
 ### USP / conversion layer (from `feed-prplos/usp`)
 | dir | version | requested-as |
@@ -92,6 +93,7 @@ them. The right-hand column maps back to the component names used in the origina
 |---|---|---|
 | `tr181-device`       | v0.36.0 | **tr181-device** (`Device.` root + framework) |
 | `deviceinfo-manager` | v2.41.0 | **tr181-deviceinfo** — prpl packages `Device.DeviceInfo.*` as `deviceinfo-manager` (source repo is still `tr181-deviceinfo`) |
+| `time-manager`       | v2.11.0 | **tr181-time** — packages `Device.Time.*` (NTP sync status) as `time-manager`; obuspa's connect-gate waits for `Device.Time.Status==Synchronized`. Drives `chrony-prpl`. |
 | `tr181-gatewayinfo`  | v0.2.0  | **tr181-gatewayinfo** (`Device.GatewayInfo.*`) |
 | `mod-dmext`          | v0.15.1 | *(transitive: data-model extensions; hard dep of tr181-device)* |
 | `mod-dmproxy`        | v1.6.1  | *(transitive: data-model proxy; hard dep of tr181-device)* |

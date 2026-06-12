@@ -1,0 +1,5 @@
+#!/bin/sh
+
+sed -i 's|echo "$timezone" > /tmp/TZ|echo "$timezone" > /tmp/TZ.tmp \&\& mv /tmp/TZ.tmp /tmp/TZ|g' /etc/init.d/system
+
+exit 0

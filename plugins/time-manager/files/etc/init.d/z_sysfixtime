@@ -1,0 +1,18 @@
+#!/bin/sh /etc/rc.common
+
+START=00
+
+boot() {
+	local maxtime="$(maxtime)"
+	local curtime="$(date +%s)"
+	[ $curtime -lt $maxtime ] && date -s @$maxtime
+}
+
+maxtime() {
+	local file newest
+
+	for file in $( find /cfg -type f ) ; do
+		[ -z "$newest" -o "$newest" -ot "$file" ] && newest=$file
+	done
+	[ "$newest" ] && date -r "$newest" +%s
+}
