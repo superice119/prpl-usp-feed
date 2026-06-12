@@ -54,11 +54,15 @@ jobs:
 
       - name: Install host build dependencies
         run: |
+          # Mirrors the OpenWrt buildbot buildworker image (the base of openwrt/sdk),
+          # so the bare runner has the same host toolchain the official SDK ships with.
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            build-essential ccache file gawk gettext git libelf-dev \
-            libncurses-dev libssl-dev python3 python3-setuptools rsync \
-            unzip wget xsltproc zlib1g-dev zstd
+            build-essential ccache curl file gawk g++-multilib gcc-multilib \
+            gettext git libdw-dev libelf-dev libncurses5-dev libssl-dev locales \
+            python3 python3-venv python3-pip python3-setuptools python3-pyelftools \
+            python3-cryptography rsync subversion swig unzip wget xsltproc \
+            zlib1g-dev zstd
 
       - name: Resolve OpenWrt version + SDK URL
         id: sdk
@@ -101,17 +105,31 @@ jobs:
             dl-${{ matrix.arch }}-${{ steps.sdk.outputs.version }}-
             dl-${{ matrix.arch }}-
 
+      - name: Cache feeds (avoids re-cloning openwrt.git 'base' feed each run)
+        uses: actions/cache@v4
+        with:
+          path: sdk/feeds
+          # Feed pins are fixed per OpenWrt release, so version is a safe key.
+          key: feeds-${{ matrix.arch }}-${{ steps.sdk.outputs.version }}
+          restore-keys: |
+            feeds-${{ matrix.arch }}-
+
       - name: Wire feed + install packages
         working-directory: sdk
         run: |
           set -euo pipefail
-          # Reuse the 'packages' feed pin from the SDK's own default (correct revision,
-          # no fabrication); add our feed as a src-link. base libs (libubox/ubus/...)
-          # ship inside the SDK tree, so only the 'packages' feed is needed for deps.
-          { grep -E '^src-git(-full)? packages ' feeds.conf.default || true; } > feeds.conf
+          # Use the SDK's FULL feeds.conf.default (it includes the 'base' feed that
+          # provides libopenssl/mbedtls/libubus/libxml2 — without it every TLS consumer
+          # fails). Mirror openwrt/gh-action-sdk exactly, including its git.openwrt.org ->
+          # github.com rewrite (git.openwrt.org is frequently slow/unreachable from CI).
+          sed \
+            -e 's,https://git.openwrt.org/feed/,https://github.com/openwrt/,' \
+            -e 's,https://git.openwrt.org/openwrt/,https://github.com/openwrt/,' \
+            -e 's,https://git.openwrt.org/project/,https://github.com/openwrt/,' \
+            feeds.conf.default > feeds.conf
           echo "src-link ${FEEDNAME} ${GITHUB_WORKSPACE}/feed" >> feeds.conf
           cat feeds.conf
-          ./scripts/feeds update packages "${FEEDNAME}"
+          ./scripts/feeds update -a
           ./scripts/feeds install -a -p "${FEEDNAME}"
 
       - name: Configure (enable only this feed's packages)
