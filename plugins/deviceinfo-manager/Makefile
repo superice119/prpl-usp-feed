@@ -16,7 +16,9 @@ PKG_LICENSE_FILES:=LICENSE
 
 COMPONENT:=deviceinfo-manager
 
-PKG_RELEASE:=1
+# -r2: prpl-feed drops the requires "Users.User." extension (no Device.Users
+# provider in this minimal feed) so DeviceInfo registers without a Users daemon.
+PKG_RELEASE:=2
 
 define SAHInit/Install
 	install -d $(1)/etc/rc.d/
@@ -85,6 +87,12 @@ define Package/$(PKG_NAME)/install
 	find $(1) -name *.a -exec rm {} +;
 	find $(1) -name *.h -exec rm {} +;
 	find $(1) -name *.pc -exec rm {} +;
+	# prpl-feed: this minimal USP feed ships no Device.Users provider. The stock
+	# 'requires "Users.User."' extension makes deviceinfo-manager's pre-service hook
+	# block forever ("wait until object 'Users.User.' becomes available"), so it never
+	# registers Device.DeviceInfo with the obuspa broker. deviceinfo-manager already
+	# runs as root, so the Users lookup is unnecessary — drop the extension.
+	rm -f $(1)/etc/amx/deviceinfo-manager/extensions/deviceinfo-manager_requires_users.odl
 endef
 
 define Package/$(PKG_NAME)/config
