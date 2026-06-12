@@ -112,16 +112,21 @@ them. The right-hand column maps back to the component names used in the origina
 The feed produces OpenWrt **.ipk packages** for two boards (other arches work too — just change the
 target/arch):
 
-| board | OpenWrt target | package arch | OpenWrt SDK image |
+| board | OpenWrt target | package arch | OpenWrt SDK tarball |
 |---|---|---|---|
-| **mt7621** | `ramips/mt7621` | `mipsel_24kc` | `openwrt/sdk:ramips-mt7621-24.10.7` |
-| **rk3308** | `rockchip/armv8` | `aarch64_generic` | `openwrt/sdk:rockchip-armv8-24.10.7` |
+| **mt7621** | `ramips/mt7621` | `mipsel_24kc` | `openwrt-sdk-<ver>-ramips-mt7621_gcc-*_musl.Linux-x86_64.tar.zst` |
+| **rk3308** | `rockchip/armv8` | `aarch64_generic` | `openwrt-sdk-<ver>-rockchip-armv8_gcc-*_musl.Linux-x86_64.tar.zst` |
 
 Default OpenWrt release is **24.10.7** (override everywhere via a version arg/input). Four ways to build:
 
-1. **GitHub CI** — `.github/workflows/build.yml`. On push/PR it builds the whole feed for both arches via
-   the official `openwrt/gh-action-sdk`, uploads the `.ipk` as artifacts, and on a `v*` tag attaches them
-   to a GitHub Release. Manual run: *Actions → Build packages → Run workflow* (optional `version` input).
+1. **GitHub CI** — `.github/workflows/build.yml`. On push/PR it downloads the official OpenWrt **SDK
+   tarball** from `downloads.openwrt.org` (no Docker), runs it directly on the runner, and builds the whole
+   feed for both arches. Only this feed's packages are set to `=m`, so `make` compiles our 35 packages
+   (and their dependencies) and nothing else from the OpenWrt tree. The exact SDK filename (it carries the
+   gcc version) is resolved from the release directory listing at build time — never hardcoded. `dl/` and
+   the SDK tarball are cached, so repeat builds are much faster than the first. Artifacts upload per arch,
+   and on a `v*` tag they attach to a GitHub Release. Manual run: *Actions → Build packages → Run workflow*
+   (optional `version` input).
 2. **Container** — `./docker-build.sh [mt7621|rk3308] [version]` (no args = both boards). Builds inside
    the `openwrt/sdk` image and drops `.ipk` into `./artifacts/<arch>/`. Env: `ENABLE_MTLS=1`, `VERSION=`,
    `DOCKER=podman`.

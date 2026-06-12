@@ -1,11 +1,15 @@
 name: Build packages
 
 # Builds the prpl USP feed as OpenWrt .ipk packages for mt7621 and rk3308,
-# using the official OpenWrt SDK via openwrt/gh-action-sdk.
+# using the official OpenWrt **SDK tarball** (no Docker) downloaded straight from
+# downloads.openwrt.org, with dl/ + SDK caching so repeat builds are fast.
 #
 #   board    OpenWrt target     package arch
 #   mt7621   ramips/mt7621      mipsel_24kc
 #   rk3308   rockchip/armv8     aarch64_generic
+#
+# Only this feed's packages are set to =m, so `make` compiles our 35 packages
+# (and their dependencies) — nothing else from the OpenWrt tree.
 
 on:
   push:
@@ -16,7 +20,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'OpenWrt release (SDK version), e.g. 24.10.7 or SNAPSHOT'
+        description: 'OpenWrt release (SDK version), e.g. 24.10.7'
         required: false
         default: '24.10.7'
 
@@ -25,7 +29,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # default OpenWrt version when not triggered via workflow_dispatch
   DEFAULT_VERSION: '24.10.7'
   FEEDNAME: prpl_usp
 
@@ -38,38 +41,117 @@ jobs:
       matrix:
         include:
           - board: mt7621
+            target: ramips/mt7621
             arch: mipsel_24kc
           - board: rk3308
+            target: rockchip/armv8
             arch: aarch64_generic
     steps:
       - name: Checkout feed
         uses: actions/checkout@v4
+        with:
+          path: feed
 
-      - name: Resolve OpenWrt version
-        id: ver
-        run: echo "version=${{ github.event.inputs.version || env.DEFAULT_VERSION }}" >> "$GITHUB_OUTPUT"
+      - name: Install host build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential ccache file gawk gettext git libelf-dev \
+            libncurses-dev libssl-dev python3 python3-setuptools rsync \
+            unzip wget xsltproc zlib1g-dev zstd
 
-      - name: Build with OpenWrt SDK
-        uses: openwrt/gh-action-sdk@main
-        env:
-          # <package-arch>-<openwrt-version>; selects the openwrt/sdk container
-          ARCH: ${{ matrix.arch }}-${{ steps.ver.outputs.version }}
-          FEEDNAME: ${{ env.FEEDNAME }}
-          # PACKAGES empty => build the WHOLE feed (validates all packages)
-          V: s
-          INDEX: '1'
-          # Diagnostic mode: a single package failing (e.g. a tr181-* that still
-          # carries a prplOS-OpenWrt-ism) does NOT abort the whole arch — the
-          # packages that compiled are still uploaded, and every failure shows in
-          # the log. Flip to '0' once the feed is proven mainline-clean for a strict gate.
-          IGNORE_ERRORS: '1'
+      - name: Resolve OpenWrt version + SDK URL
+        id: sdk
+        run: |
+          set -euo pipefail
+          VERSION="${{ github.event.inputs.version || env.DEFAULT_VERSION }}"
+          BASE="https://downloads.openwrt.org/releases/${VERSION}/targets/${{ matrix.target }}"
+          # Derive the exact SDK filename (carries the gcc version) — never hardcode it.
+          FILE="$(curl -fsSL "${BASE}/" | grep -ioE 'openwrt-sdk[^"<> ]*\.tar\.(zst|xz)' | sort -u | head -1)"
+          if [ -z "${FILE}" ]; then echo "::error::no SDK tarball found at ${BASE}/"; exit 1; fi
+          echo "version=${VERSION}"      >> "$GITHUB_OUTPUT"
+          echo "file=${FILE}"            >> "$GITHUB_OUTPUT"
+          echo "url=${BASE}/${FILE}"     >> "$GITHUB_OUTPUT"
+          echo "Resolved SDK: ${BASE}/${FILE}"
+
+      - name: Cache SDK tarball
+        uses: actions/cache@v4
+        with:
+          path: sdk.tar
+          key: sdk-${{ steps.sdk.outputs.file }}
+
+      - name: Download + extract SDK
+        run: |
+          set -euo pipefail
+          if [ ! -s sdk.tar ]; then
+            wget -q -O sdk.tar "${{ steps.sdk.outputs.url }}"
+          fi
+          mkdir -p sdk
+          case "${{ steps.sdk.outputs.file }}" in
+            *.zst) tar --use-compress-program=unzstd -xf sdk.tar -C sdk --strip-components=1 ;;
+            *.xz)  tar -xf sdk.tar -C sdk --strip-components=1 ;;
+          esac
+
+      - name: Cache downloads (dl/)
+        uses: actions/cache@v4
+        with:
+          path: sdk/dl
+          key: dl-${{ matrix.arch }}-${{ steps.sdk.outputs.version }}-${{ hashFiles('feed/**/Makefile') }}
+          restore-keys: |
+            dl-${{ matrix.arch }}-${{ steps.sdk.outputs.version }}-
+            dl-${{ matrix.arch }}-
+
+      - name: Wire feed + install packages
+        working-directory: sdk
+        run: |
+          set -euo pipefail
+          # Reuse the 'packages' feed pin from the SDK's own default (correct revision,
+          # no fabrication); add our feed as a src-link. base libs (libubox/ubus/...)
+          # ship inside the SDK tree, so only the 'packages' feed is needed for deps.
+          { grep -E '^src-git(-full)? packages ' feeds.conf.default || true; } > feeds.conf
+          echo "src-link ${FEEDNAME} ${GITHUB_WORKSPACE}/feed" >> feeds.conf
+          cat feeds.conf
+          ./scripts/feeds update packages "${FEEDNAME}"
+          ./scripts/feeds install -a -p "${FEEDNAME}"
+
+      - name: Configure (enable only this feed's packages)
+        working-directory: sdk
+        run: |
+          set -euo pipefail
+          echo "CONFIG_CCACHE=y" >> .config
+          # Set =m for every package this feed defines (PKG_NAME may differ from dir).
+          : > /tmp/pkglist
+          while IFS= read -r mk; do
+            pn="$(sed -n 's/^PKG_NAME:=//p' "$mk" | head -1)"
+            [ -n "$pn" ] && echo "$pn" >> /tmp/pkglist
+          done < <(find "${GITHUB_WORKSPACE}/feed" -name Makefile)
+          sort -u /tmp/pkglist -o /tmp/pkglist
+          while read -r pn; do echo "CONFIG_PACKAGE_${pn}=m" >> .config; done < /tmp/pkglist
+          make defconfig
+          echo "Will build $(wc -l < /tmp/pkglist) feed packages."
+
+      - name: Compile
+        working-directory: sdk
+        run: |
+          set -uo pipefail
+          export PATH="/usr/lib/ccache:$PATH"
+          # Single parallel make; IGNORE_ERRORS keeps going so one bad package does not
+          # mask the rest (diagnostic mode — flip off for a strict gate once all green).
+          make -j"$(nproc)" V=s IGNORE_ERRORS=1 || true
+          echo "=== build summary ==="
+          while read -r pn; do
+            if ls bin/packages/*/"${FEEDNAME}"/"${pn}"_*.ipk >/dev/null 2>&1; then
+              echo "  OK    ${pn}"
+            else
+              echo "  FAIL  ${pn}"
+            fi
+          done < /tmp/pkglist
 
       - name: Collect artifacts
         run: |
+          set -euo pipefail
           mkdir -p out
-          # Our packages land in bin/packages/<arch>/<FEEDNAME>/ — collect ONLY those,
-          # not the SDK's prebuilt base/kmod set that also lives under bin/.
-          find bin -path "*/${FEEDNAME}/*.ipk" -exec cp -v {} out/ \;
+          find sdk/bin -path "*/${FEEDNAME}/*.ipk" -exec cp -v {} out/ \;
           echo "collected $(find out -name '*.ipk' | wc -l) package(s):"
           ls -1 out
 
@@ -96,7 +178,6 @@ jobs:
       - name: Stage release files (prefix by board)
         run: |
           mkdir -p release
-          # dist/ipk-<board>-<arch>/<pkg>.ipk -> release/<board>-<arch>-<pkg>.ipk
           for d in dist/ipk-*; do
             tag="$(basename "$d" | sed 's/^ipk-//')"
             for f in "$d"/*.ipk; do
