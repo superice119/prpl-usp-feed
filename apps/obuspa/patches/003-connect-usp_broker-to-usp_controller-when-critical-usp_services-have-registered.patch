@@ -29,7 +29,7 @@ index b205faf..1ffba87 100644
 +{
 +   char time_status[50];
 +   int err;
-+   return true; // prpl-feed (Plan A): connect-gate disabled — connect immediately, do not wait for USP-service registration of DeviceInfo/Time.
++
 +   // Exit if tr181-device has not registered the critical objects it provides for the data model
 +   if (USP_DM_IsRegistered(DM_DEVICE_DEVICEINFO) == false)
 +   {

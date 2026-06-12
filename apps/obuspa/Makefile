@@ -15,10 +15,7 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_FIXUP:=autoreconf
 PKG_INSTALL=1
 
-# -r4: prpl-feed Plan A — patches 002/003 adjusted so obuspa keeps its built-in
-# DeviceInfo/Time and connects to the Controller without the USP-service
-# registration gate (standalone-agent mode). See README "Standalone-agent mode".
-PKG_RELEASE:=4
+PKG_RELEASE:=3
 
 include $(INCLUDE_DIR)/package.mk
 

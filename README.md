@@ -235,16 +235,6 @@ CONFIG_SAH_AMX_TR181_DEVICE_ORDER=41
     **This is what `RESET_FILE` in the shipped `/etc/init.d/obuspa` points to by default.**
   * `files/etc/config/obuspa_param_reset.txt` — the upstream **STOMP** example (kept for reference; point
     `RESET_FILE` back at it to use STOMP instead).
-* **Standalone-agent mode (default in this feed, "Plan A").** Upstream prpl patches 002+003 make obuspa a
-  pure USP **Broker** that strips its own `Device.DeviceInfo`/`Device.Time` and refuses to connect to the
-  Controller until an external USP **Service** registers them (+ NTP synced). That needs prplOS's full
-  USP-service registration glue, which this minimal feed does not provide — so the gateway would never
-  reach the Controller. This feed therefore adjusts those two patches (see `apps/obuspa/patches/002`,`003`):
-  obuspa **keeps its built-in `Device.DeviceInfo`/`Device.Time`** (OUI/serial from `USP_BOARD_OUI`/
-  `USP_BOARD_SERIAL` env) and the `can_mtp_connect` gate is disabled, so it **connects to the Controller
-  (e.g. Oktopus) immediately**. Trade-off: the rich `tr181-*` data models won't appear in the Controller
-  until the full broker-registration path is wired ("Plan B"). To revert to strict broker mode, restore the
-  two `#define REMOVE_DEVICE_*` lines in patch 002 and remove the early `return true;` in patch 003.
 * **Runtime dependency on `ba-cli`**: the shipped `/etc/init.d/obuspa` queries the `Security.*` data
   model through **`ba-cli`** (from `mod-ba-cli`, in `feed_amx`) and expects **`tr181-security`** to provide
   the CA bundle / certificate for mTLS. For a plain (non-mTLS) WebSocket bring-up you can either install
