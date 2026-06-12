@@ -105,15 +105,11 @@ jobs:
             dl-${{ matrix.arch }}-${{ steps.sdk.outputs.version }}-
             dl-${{ matrix.arch }}-
 
-      - name: Cache feeds (avoids re-cloning openwrt.git 'base' feed each run)
-        uses: actions/cache@v4
-        with:
-          path: sdk/feeds
-          # Feed pins are fixed per OpenWrt release, so version is a safe key.
-          key: feeds-${{ matrix.arch }}-${{ steps.sdk.outputs.version }}
-          restore-keys: |
-            feeds-${{ matrix.arch }}-
-
+      # NOTE: the 'base' feed is a src-git-full clone of openwrt.git (~1GB+ .git).
+      # Caching sdk/feeds restores that huge repo inconsistently and makes
+      # `feeds update base` fail, so it is deliberately re-cloned each run (this is
+      # what openwrt/gh-action-sdk does too). The dl/ + SDK-tarball caches above are
+      # the safe, effective speedups.
       - name: Wire feed + install packages
         working-directory: sdk
         run: |
